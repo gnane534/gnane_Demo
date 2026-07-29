@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResuMind AI - Advanced Resume Review Agent</title>
+    <!-- Google Fonts: Outfit (headings) and Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Main stylesheet link -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i data-lucide="sparkles" class="logo-icon"></i>
+                <h1 class="logo-text">ResuMind <span class="accent-text">AI</span></h1>
+            </div>
+            <p class="header-tagline">AI-Powered Resume Analysis & Optimization Agent</p>
+            <div class="header-actions">
+                <button id="btn-toggle-settings" class="btn btn-secondary btn-icon-only" title="Configure API Key">
+                    <i data-lucide="settings"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- SETTINGS PANEL (COLLAPSIBLE) -->
+        <section id="settings-panel" class="settings-panel hidden">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h3><i data-lucide="key-round"></i> API Configuration</h3>
+                    <button id="btn-close-settings" class="btn-close">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label for="input-api-key">Gemini API Key (stored locally)</label>
+                    <div class="input-with-action">
+                        <input type="password" id="input-api-key" placeholder="Enter your Gemini API Key..." />
+                        <button id="btn-toggle-key-visibility" class="btn btn-secondary" title="Show/Hide Key">
+                            <i data-lucide="eye" id="icon-eye"></i>
+                        </button>
+                    </div>
+                    <p class="input-help">Your API key is saved locally in your browser and used directly for resume
+                        analysis.</p>
+                </div>
+                <div class="settings-actions">
+                    <button id="btn-save-settings" class="btn btn-primary">Save Key</button>
+                    <button id="btn-clear-settings" class="btn btn-danger">Clear Key</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAIN LAYOUT -->
+        <main class="main-content">
+            <!-- LEFT PANEL: INPUTS & SETUP -->
+            <section class="left-panel">
+                <!-- TARGET ROLE INPUT -->
+                <div class="card setup-card">
+                    <div class="card-header">
+                        <h2><i data-lucide="briefcase" class="header-icon"></i> 1. Target Job Details</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="input-target-role">Target Job Title <span class="required">*</span></label>
+                            <input type="text" id="input-target-role" placeholder="e.g., Senior Frontend Developer"
+                                required />
+                        </div>
+                        <div class="form-group">
+                            <label for="input-job-desc">Job Description / Key Requirements (Optional)</label>
+                            <textarea id="input-job-desc"
+                                placeholder="Paste the job description here for highly targeted recommendations..."
+                                rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Analysis Mode</label>
+                            <div class="mode-toggle-group">
+                                <button id="btn-mode-local" class="btn-mode active" data-mode="local">
+                                    <i data-lucide="shield-check"></i>
+                                    <span>Local Engine (Offline)</span>
+                                </button>
+                                <button id="btn-mode-ai" class="btn-mode" data-mode="ai">
+                                    <i data-lucide="cpu"></i>
+                                    <span>Gemini AI Mode</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RESUME UPLOAD ZONE -->
+                <div class="card upload-card">
+                    <div class="card-header">
+                        <h2><i data-lucide="file-text" class="header-icon"></i> 2. Upload or Paste Resume</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="drop-zone" class="drop-zone">
+                            <input type="file" id="file-input" accept=".pdf,.docx,.txt" class="file-input-hidden" />
+                            <i data-lucide="upload-cloud" class="upload-icon"></i>
+                            <p class="upload-text">Drag & drop your resume file here</p>
+                            <p class="upload-subtext">Supports PDF, Word (.docx), or Text (.txt)</p>
+                            <button id="btn-select-file" class="btn btn-secondary btn-sm">Select File</button>
+                        </div>
+
+                        <div id="file-badge" class="file-badge hidden">
+                            <i data-lucide="file-check" class="badge-icon"></i>
+                            <span id="file-name-text">resume.pdf</span>
+                            <button id="btn-remove-file" class="btn-remove">&times;</button>
+                        </div>
+
+                        <div class="divider">
+                            <span>OR</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="text-resume-paste">Paste Resume Text</label>
+                            <textarea id="text-resume-paste" placeholder="Paste the plain text of your resume here..."
+                                rows="8"></textarea>
+                        </div>
+
+                        <button id="btn-analyze" class="btn btn-primary btn-block btn-lg btn-glow">
+                            <i data-lucide="wand-2"></i> Analyze Resume
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BULLET POINT REWRITE ASSISTANT -->
+                <div class="card rewrite-card">
+                    <div class="card-header">
+                        <h2><i data-lucide="refresh-cw-off" class="header-icon"></i> Rewrite Assistant</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="section-intro">Struggling with a specific bullet point? Paste it here to generate
+                            high-impact alternatives.</p>
+                        <div class="form-group">
+                            <label for="input-rewrite-bullet">Original Bullet Point</label>
+                            <input type="text" id="input-rewrite-bullet"
+                                placeholder="e.g., I was responsible for writing unit tests." />
+                        </div>
+                        <button id="btn-rewrite" class="btn btn-secondary btn-block">
+                            <i data-lucide="sparkle"></i> Rewrite Bullet Point
+                        </button>
+
+                        <!-- REWRITE RESULTS -->
+                        <div id="rewrite-results-container" class="rewrite-results hidden">
+                            <h4>Suggested Alternatives:</h4>
+                            <div class="rewrite-suggestions">
+                                <div class="suggestion-item">
+                                    <span class="suggestion-tag tag-action">Action-Oriented</span>
+                                    <p id="rewrite-text-action" class="suggestion-text">Engineered a comprehensive suite
+                                        of unit tests, strengthening codebase stability.</p>
+                                    <button class="btn-copy-suggestion" data-target="rewrite-text-action"
+                                        title="Copy to clipboard">
+                                        <i data-lucide="copy"></i>
+                                    </button>
+                                </div>
+                                <div class="suggestion-item">
+                                    <span class="suggestion-tag tag-result">Result-Oriented</span>
+                                    <p id="rewrite-text-result" class="suggestion-text">Implemented automated unit
+                                        testing that decreased deployment bugs by 35%.</p>
+                                    <button class="btn-copy-suggestion" data-target="rewrite-text-result"
+                                        title="Copy to clipboard">
+                                        <i data-lucide="copy"></i>
+                                    </button>
+                                </div>
+                                <div class="suggestion-item">
+                                    <span class="suggestion-tag tag-lead">Leadership-Oriented</span>
+                                    <p id="rewrite-text-lead" class="suggestion-text">Spearheaded the unit testing
+                                        strategy for the core product, training 4 developers on best practices.</p>
+                                    <button class="btn-copy-suggestion" data-target="rewrite-text-lead"
+                                        title="Copy to clipboard">
+                                        <i data-lucide="copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: DASHBOARD / RESULTS -->
+            <section class="right-panel">
+                <!-- INITIAL PLACEHOLDER STATE -->
+                <div id="state-initial" class="state-panel text-center">
+                    <div class="placeholder-graphic">
+                        <i data-lucide="file-search-2" class="graphic-icon animate-float"></i>
+                    </div>
+                    <h2>No Resume Analyzed Yet</h2>
+                    <p class="placeholder-text">Fill in your target role, upload or paste your resume, and click
+                        <strong>Analyze Resume</strong> to receive actionable AI-powered feedback.</p>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <i data-lucide="check-circle" class="feat-icon"></i>
+                            <span>Score metrics out of 100</span>
+                        </div>
+                        <div class="feature-item">
+                            <i data-lucide="check-circle" class="feat-icon"></i>
+                            <span>Identifies missing sections</span>
+                        </div>
+                        <div class="feature-item">
+                            <i data-lucide="check-circle" class="feat-icon"></i>
+                            <span>Finds grammatical & styling errors</span>
+                        </div>
+                        <div class="feature-item">
+                            <i data-lucide="check-circle" class="feat-icon"></i>
+                            <span>Highlights weak keywords</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOADING/SCANNING STATE -->
+                <div id="state-loading" class="state-panel text-center hidden">
+                    <div class="scanner-container">
+                        <div class="scanner-line"></div>
+                        <div class="scanner-doc">
+                            <i data-lucide="file-text" class="scanner-doc-icon"></i>
+                        </div>
+                    </div>
+                    <h2 class="loading-title">Analyzing Your Resume...</h2>
+                    <p id="loading-status-text" class="loading-status">Parsing document bytes...</p>
+                    <div class="progress-bar-container">
+                        <div id="loading-progress" class="loading-progress-bar" style="width: 10%;"></div>
+                    </div>
+                </div>
+
+                <!-- RESULTS DASHBOARD STATE -->
+                <div id="state-results" class="state-panel hidden">
+                    <!-- OVERVIEW CARD -->
+                    <div class="dashboard-header-card">
+                        <div class="score-section">
+                            <div class="radial-progress">
+                                <svg class="circle-svg">
+                                    <circle class="circle-bg" cx="60" cy="60" r="50"></circle>
+                                    <circle id="score-ring" class="circle-progress" cx="60" cy="60" r="50"
+                                        style="stroke-dashoffset: 314;"></circle>
+                                </svg>
+                                <div class="score-value">
+                                    <span id="score-number">0</span>
+                                    <span class="score-total">/100</span>
+                                </div>
+                            </div>
+                            <div class="score-label-container">
+                                <h3 id="score-rating">Fair</h3>
+                                <p class="score-subtext">Overall Resume Strength</p>
+                            </div>
+                        </div>
+
+                        <div class="summary-section">
+                            <h3>Executive Evaluation</h3>
+                            <p id="analysis-summary-text">...</p>
+                            <div class="export-actions">
+                                <button id="btn-export-report" class="btn btn-secondary btn-sm">
+                                    <i data-lucide="printer"></i> Export / Print Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DETAILED METRICS CHART -->
+                    <div class="metrics-grid">
+                        <div class="metric-progress-item">
+                            <div class="metric-progress-labels">
+                                <span>Structure & Formatting</span>
+                                <span id="val-metric-structure">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-metric-structure" class="progress-fill fill-structure" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="metric-progress-item">
+                            <div class="metric-progress-labels">
+                                <span>Content Relevance</span>
+                                <span id="val-metric-content">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-metric-content" class="progress-fill fill-content" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="metric-progress-item">
+                            <div class="metric-progress-labels">
+                                <span>Skills Matching</span>
+                                <span id="val-metric-skills">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-metric-skills" class="progress-fill fill-skills" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="metric-progress-item">
+                            <div class="metric-progress-labels">
+                                <span>Action & Impact</span>
+                                <span id="val-metric-impact">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-metric-impact" class="progress-fill fill-impact" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="metric-progress-item">
+                            <div class="metric-progress-labels">
+                                <span>Grammar & Readability</span>
+                                <span id="val-metric-grammar">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div id="bar-metric-grammar" class="progress-fill fill-grammar" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABS NAVIGATION -->
+                    <nav class="dashboard-tabs">
+                        <button class="tab-btn active" data-tab="tab-sections">
+                            <i data-lucide="layout"></i> Sections Check
+                        </button>
+                        <button class="tab-btn" data-tab="tab-grammar">
+                            <i data-lucide="check-check"></i> Grammar & Style
+                        </button>
+                        <button class="tab-btn" data-tab="tab-weak">
+                            <i data-lucide="trending-down"></i> Weak Phrases
+                        </button>
+                        <button class="tab-btn" data-tab="tab-skills">
+                            <i data-lucide="cpu"></i> Skills Match
+                        </button>
+                        <button class="tab-btn" data-tab="tab-recommendations">
+                            <i data-lucide="lightbulb"></i> Action Plan
+                        </button>
+                    </nav>
+
+                    <!-- TAB CONTENT PANELS -->
+                    <div class="tab-content-container">
+
+                        <!-- TAB: SECTIONS -->
+                        <div id="tab-sections" class="tab-pane active">
+                            <h3>Resume Structure Check</h3>
+                            <p class="tab-desc">Standard sections are critical for applicant tracking systems (ATS) and
+                                human recruiters to skim your resume effectively.</p>
+                            <div id="sections-list" class="sections-checklist">
+                                <!-- Dynamically populated list of section checks -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: GRAMMAR & STYLE -->
+                        <div id="tab-grammar" class="tab-pane">
+                            <h3>Grammar & Formatting Quality</h3>
+                            <p class="tab-desc">Ensure your resume contains no styling glitches, contact errors, or
+                                passive syntax.</p>
+                            <div id="grammar-list" class="grammar-checklist">
+                                <!-- Dynamically populated grammar/style list -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: WEAK PHRASES & REWRITES -->
+                        <div id="tab-weak" class="tab-pane">
+                            <h3>Weak Bullet Points Identified</h3>
+                            <p class="tab-desc">Bullet points that lack strong action verbs or quantitative results
+                                diminish the perceived value of your experience.</p>
+                            <div id="weak-descriptions-list" class="weak-list">
+                                <!-- Dynamically populated weak descriptions list -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: SKILLS GAP -->
+                        <div id="tab-skills" class="tab-pane">
+                            <h3>Skills & Keywords Alignment</h3>
+                            <p class="tab-desc">How well your technical and soft skills align with the target role
+                                (<strong id="target-role-badge">...</strong>).</p>
+
+                            <div class="skills-alignment-grid">
+                                <div class="skills-alignment-col">
+                                    <h4 class="matched-title"><i data-lucide="check" class="text-success"></i> Skills
+                                        Found in Resume</h4>
+                                    <div id="matched-skills-tags" class="skills-tags">
+                                        <!-- Tags -->
+                                    </div>
+                                </div>
+                                <div class="skills-alignment-col">
+                                    <h4 class="missing-title"><i data-lucide="alert-circle" class="text-warning"></i>
+                                        Recommended / Missing Skills</h4>
+                                    <div id="missing-skills-tags" class="skills-tags">
+                                        <!-- Tags -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="skills-analysis-summary">
+                                <h4>Skills Improvement Recommendation:</h4>
+                                <p id="skills-recommendations-text">...</p>
+                            </div>
+                        </div>
+
+                        <!-- TAB: GENERAL RECOMMENDATIONS -->
+                        <div id="tab-recommendations" class="tab-pane">
+                            <h3>Actionable Recommendations</h3>
+                            <p class="tab-desc">Implement these high-impact changes to significantly boost your callback
+                                rates.</p>
+                            <ul id="general-recommendations-list" class="recommendations-bullets">
+                                <!-- Recommendations bullets -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 ResuMind AI. Built with state-of-the-art Web and LLM technologies.</p>
+        </footer>
+    </div>
+
+    <!-- DOCUMENT PARSING CDNs -->
+    <!-- Load PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Load Mammoth.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- Lucide Icons for simple, clean design icon rendering -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Main application logic link -->
+    <script src="app.js"></script>
+</body>
+
+</html>
